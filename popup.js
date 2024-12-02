@@ -1,16 +1,24 @@
-// document.getElementById('support').onclick = () => {
-//     chrome.runtime.sendMessage({ propagator: "permit" });
-//     console.log('Support button clicked');
-// }
-
-
-
-document.getElementById('support').onclick = async () => {
-
-    const tabs = await chrome.tabs.query({
-        active: true,
+document.getElementById('helpButton').addEventListener('click', () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+            const currentTabUrl = tabs[0].url;
+            console.log('Current Tab URL:', currentTabUrl);
+            let guidance = {name: "help"};
+            // Example: Sending the URL to an API
+            fetch('https://your-api-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: currentTabUrl })
+            }).then(response => response.json())
+                .then(data => {
+                    console.log('API Response:', data);
+                    crome.tabs.sendMessage(tabs[0].id, { action: 'addSummary', summary: data.summary }, response => {
+                        console.log('Response from the content script:', guidance);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            console.error('No active tab found.');
+        }
     });
-    if (tabs.length === 0) return;
-    console.log(tabs);
-    chrome.tabs.sendMessage(tabs[0].id, { propagator: "permit" });
-};
+});
